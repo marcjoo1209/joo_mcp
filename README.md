@@ -144,7 +144,32 @@ curl -X POST http://127.0.0.1:8000/chat -H "Content-Type: application/json" -d "
 
 ---
 
-## 5. 무엇을 배우게 되나요?
+## 5. 테스트 (e2e)
+
+CRUD 전체를 두 경로로 검증하는 e2e 테스트가 `tests/` 에 있습니다.
+각 테스트는 **임시 SQLite 파일**로 격리되어 실제 `notes.db` 를 건드리지 않습니다.
+
+```powershell
+pip install -r requirements.txt -r requirements-dev.txt
+pytest
+```
+
+| 파일 | 검증 대상 |
+|---|---|
+| `tests/test_notes_api_e2e.py` | 직접 REST CRUD (생성/조회/수정/삭제 + 404·422) |
+| `tests/test_mcp_server_e2e.py` | MCP 서버 도구 CRUD (실제 서버를 stdio 로 띄워 호출) |
+| `tests/test_chat_e2e.py` | AI 경로(FastAPI→Gemini→MCP). 기본 SKIP |
+
+`test_chat_e2e.py` 는 실제 Gemini 를 호출하므로 비용/비결정성 때문에 기본으로 건너뜁니다.
+돌리려면 `GEMINI_API_KEY` 설정 후:
+
+```powershell
+$env:RUN_CHAT_E2E="1"; pytest tests/test_chat_e2e.py -v
+```
+
+---
+
+## 6. 무엇을 배우게 되나요?
 
 - **MCP 서버 만들기**: `@mcp.tool()` 로 함수를 AI가 쓸 수 있는 도구로 노출
 - **MCP 클라이언트 연결**: stdio 로 서버 프로세스를 띄우고 세션 연결

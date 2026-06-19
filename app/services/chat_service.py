@@ -8,6 +8,7 @@
 '도구 목록 조회 → 호출 → 결과 전달' 루프를 SDK 가 자동 처리한다.
 """
 
+import os
 import sys
 
 from google import genai
@@ -38,6 +39,8 @@ class ChatService:
         self._server_params = StdioServerParameters(
             command=sys.executable,
             args=[settings.mcp_server_path],
+            # 앱과 MCP 서버가 같은 DB 를 쓰도록 db_path 를 자식 프로세스에 전달.
+            env={**os.environ, "DB_PATH": settings.db_path},
         )
 
     async def handle(self, message: str) -> str:
