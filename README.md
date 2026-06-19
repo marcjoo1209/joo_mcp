@@ -23,6 +23,7 @@ MCP가 처음이라면 아래 문서를 순서대로 읽으면 됩니다.
 | 1 | [docs/01-MCP란-무엇인가.md](docs/01-MCP란-무엇인가.md) | MCP가 무엇이고 왜 필요한가 (비유로 설명) |
 | 2 | [docs/02-MCP-아키텍처.md](docs/02-MCP-아키텍처.md) | Host / Client / Server 구조와 도구 호출 흐름 |
 | 3 | [docs/03-프로젝트-동작-방식.md](docs/03-프로젝트-동작-방식.md) | 이 코드가 실제로 어떻게 동작하는지 줄줄이 설명 |
+| 4 | [docs/04-비용과-세션-최적화.md](docs/04-비용과-세션-최적화.md) | 세션 재사용·컨텍스트 캐싱으로 지연/비용 줄이기 |
 
 ---
 
@@ -56,7 +57,8 @@ joo_mcp/
     │       └── chat.py            ←   /chat 라우터 (AI CRUD)
     ├── services/
     │   ├── note_service.py        ←   메모 비즈니스 로직
-    │   └── chat_service.py        ← ★ Gemini ↔ MCP 오케스트레이션 (핵심)
+    │   ├── chat_service.py        ← ★ Gemini ↔ MCP 오케스트레이션 (핵심)
+    │   └── mcp_session.py         ←   영속 MCP 세션 매니저 (요청당 subprocess 제거)
     ├── repositories/
     │   └── note_repository.py     ← ★ 데이터 접근(SQL). REST와 MCP가 공유
     ├── models/note.py             ←   도메인 모델
@@ -104,7 +106,8 @@ uvicorn app.main:app --reload
 ```
 
 > MCP 서버(`mcp_server/server.py`)는 따로 실행하지 않습니다.
-> FastAPI 앱이 필요할 때 자동으로 하위 프로세스로 띄웁니다.
+> FastAPI 앱이 **시작 시 한 번** 하위 프로세스로 띄워 앱 수명 동안 재사용합니다.
+> (요청마다 띄우지 않아 지연이 줄어듭니다 — [docs/04](docs/04-비용과-세션-최적화.md))
 
 실행 후 브라우저에서 **http://127.0.0.1:8000/docs** 를 열면
 Swagger UI로 모든 API를 직접 눌러볼 수 있습니다.

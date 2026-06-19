@@ -31,10 +31,26 @@ def temp_db(tmp_path, monkeypatch):
 
 
 @pytest.fixture
-def client(temp_db):
-    """임시 DB 에 연결된 FastAPI TestClient.
+def client(temp_db, monkeypatch):
+    """REST 전용 TestClient (Gemini/MCP 비활성).
 
-    `with TestClient(app)` 형태로 써야 lifespan(시작 시 init_db)이 실행된다.
+    REST CRUD 테스트는 Gemini 가 필요 없다. 키를 비워 lifespan 이 MCP 세션을
+    띄우지 않게 해(빠르고 격리), 불필요한 subprocess 기동을 막는다.
+    """
+    monkeypatch.setattr(settings, "gemini_api_key", "")
+    from fastapi.testclient import TestClient
+
+    from app.main import app
+
+    with TestClient(app) as test_client:
+        yield test_client
+
+
+@pytest.fixture
+def chat_client(temp_db):
+    """AI 경로용 TestClient.
+
+    실제 키를 유지하므로 lifespan 이 영속 MCP 세션을 1회 열고, 종료 시 닫는다.
     """
     from fastapi.testclient import TestClient
 

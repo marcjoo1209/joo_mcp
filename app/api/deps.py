@@ -6,7 +6,7 @@ FastAPI 의 Depends 가 호출하는 '제공자(provider)' 함수들입니다.
 → 계층 간 결합을 낮추고, 테스트 시 가짜(mock) 구현으로 교체하기 쉬워집니다.
 """
 
-from functools import lru_cache
+from fastapi import HTTPException, Request, status
 
 from app.repositories.note_repository import NoteRepository
 from app.services.chat_service import ChatService
@@ -18,7 +18,16 @@ def get_note_service() -> NoteService:
     return NoteService(NoteRepository())
 
 
-@lru_cache
-def get_chat_service() -> ChatService:
-    """ChatService 는 Gemini 클라이언트를 들고 있으므로 1회만 생성해 재사용한다."""
-    return ChatService()
+def get_chat_service(request: Request) -> ChatService:
+    """앱 시작 시 lifespan 이 만들어 둔 ChatService 를 돌려준다.
+
+    ChatService 는 영속 MCP 세션을 들고 있어 매 요청마다 새로 만들지 않는다.
+    GEMINI_API_KEY 가 없으면 lifespan 이 생성하지 않으므로 503 으로 안내한다.
+    """
+    service = getattr(request.app.state, "chat_service", None)
+    if service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="GEMINI_API_KEY 가 설정되지 않아 /chat 을 사용할 수 없습니다.",
+        )
+    return service
