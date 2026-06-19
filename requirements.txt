@@ -8,5 +8,5 @@ google-genai>=1.0
 # MCP 파이썬 SDK (서버/클라이언트 모두 포함)
 mcp>=1.2
 
-# 환경변수(.env) 로드
-python-dotenv>=1.0
+# 설정/환경변수(.env) 로드 + 타입 검증
+pydantic-settings>=2.0

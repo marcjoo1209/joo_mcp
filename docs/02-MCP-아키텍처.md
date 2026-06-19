@@ -26,8 +26,8 @@ MCP는 세 역할로 구성됩니다.
 
 | 역할 | 정의 | 이 예제에서 |
 |---|---|---|
-| **Host** | AI를 품고 사용자와 대화하는 앱 | FastAPI 앱 (`app/main.py`) + Gemini |
-| **Client** | Host 안에서 **서버 하나**와 연결을 담당 | `app/gemini_mcp.py` 의 `ClientSession` |
+| **Host** | AI를 품고 사용자와 대화하는 앱 | FastAPI 앱 + Gemini (`app/services/chat_service.py`) |
+| **Client** | Host 안에서 **서버 하나**와 연결을 담당 | `chat_service.py` 의 `ClientSession` |
 | **Server** | 도구/데이터를 제공 | `mcp_server/server.py` |
 
 > 한 Host는 여러 Client를 가질 수 있고, 각 Client는 서버 하나와 1:1로 연결됩니다.

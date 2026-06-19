@@ -26,31 +26,46 @@ MCP가 처음이라면 아래 문서를 순서대로 읽으면 됩니다.
 
 ---
 
-## 2. 프로젝트 구조
+## 2. 프로젝트 구조 (표준 레이어드 아키텍처)
+
+요청은 위에서 아래로만 흐릅니다: **Router → Service → Repository → DB**
 
 ```
 joo_mcp/
-├── README.md                ← 지금 이 문서
-├── requirements.txt         ← 설치할 파이썬 패키지
-├── .env.example             ← 환경변수 템플릿 (복사해서 .env 로)
+├── README.md
+├── requirements.txt
+├── .env.example
 │
-├── docs/                    ← MCP 교육 자료
+├── docs/                          ← MCP 교육 자료
 │   ├── 01-MCP란-무엇인가.md
 │   ├── 02-MCP-아키텍처.md
 │   └── 03-프로젝트-동작-방식.md
 │
-├── common/
-│   └── database.py          ← 공용 SQLite CRUD (서버/앱이 함께 사용)
-│
 ├── mcp_server/
-│   └── server.py            ← ★ MCP 서버: 메모 CRUD 도구 5개 제공
+│   └── server.py                  ← ★ MCP 서버: 메모 CRUD 도구 5개 (Repository 재사용)
 │
 └── app/
-    ├── main.py              ← ★ FastAPI: REST CRUD + /chat (AI CRUD)
-    └── gemini_mcp.py        ← ★ Gemini ↔ MCP 연결 (핵심 로직)
+    ├── main.py                    ← ★ 앱 팩토리: 라우터/예외/lifespan 조립
+    ├── core/
+    │   ├── config.py              ←   설정(pydantic-settings)
+    │   └── exceptions.py          ←   도메인 예외
+    ├── api/
+    │   ├── deps.py                ←   의존성 주입(DI) 제공자
+    │   └── routes/
+    │       ├── notes.py           ←   /notes 라우터 (직접 REST CRUD)
+    │       └── chat.py            ←   /chat 라우터 (AI CRUD)
+    ├── services/
+    │   ├── note_service.py        ←   메모 비즈니스 로직
+    │   └── chat_service.py        ← ★ Gemini ↔ MCP 오케스트레이션 (핵심)
+    ├── repositories/
+    │   └── note_repository.py     ← ★ 데이터 접근(SQL). REST와 MCP가 공유
+    ├── models/note.py             ←   도메인 모델
+    ├── schemas/note.py            ←   요청/응답 DTO
+    └── db/database.py             ←   DB 연결/초기화
 ```
 
-★ 표시가 직접 들여다봐야 할 핵심 파일입니다.
+★ 표시가 핵심 파일입니다. 계층별 책임은
+[docs/03-프로젝트-동작-방식.md](docs/03-프로젝트-동작-방식.md)에서 코드와 함께 설명합니다.
 
 ---
 
