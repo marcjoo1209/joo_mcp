@@ -22,11 +22,12 @@ from contextlib import AsyncExitStack, asynccontextmanager
 from fastapi import FastAPI, Request, status
 from fastapi.responses import JSONResponse
 
-from app.api.routes import chat, notes
+from app.api.routes import chat, intent, notes
 from app.core.config import settings
 from app.core.exceptions import NoteNotFoundError
 from app.db.database import init_db
 from app.services.chat_service import ChatService
+from app.services.intent_graph import IntentService
 from app.services.mcp_session import McpSessionManager
 
 
@@ -39,10 +40,13 @@ async def lifespan(app: FastAPI):
     # stdio 세션은 anyio 규칙상 '연 task 에서 닫아야' 하므로 여기(lifespan)에서
     # async with 로 열고 닫는다. GEMINI_API_KEY 가 없으면 /chat 비활성(REST 는 동작).
     app.state.chat_service = None
+    app.state.intent_service = None
     async with AsyncExitStack() as stack:
         if settings.gemini_api_key:
             manager = await stack.enter_async_context(McpSessionManager())
             app.state.chat_service = ChatService(manager)
+            # LangGraph 기반 의도 파악 서비스도 같은 MCP 세션을 공유한다.
+            app.state.intent_service = IntentService(manager)
         yield
     # async with 종료 시 MCP 세션도 같은 task 에서 정리됨
 
@@ -60,6 +64,7 @@ def create_app() -> FastAPI:
     # 라우터 등록
     app.include_router(notes.router)
     app.include_router(chat.router)
+    app.include_router(intent.router)
 
     # 도메인 예외 → HTTP 404 변환 (웹 계층에서만 HTTP 를 안다)
     @app.exception_handler(NoteNotFoundError)

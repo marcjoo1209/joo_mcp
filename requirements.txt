@@ -8,5 +8,8 @@ google-genai>=1.0
 # MCP 파이썬 SDK (서버/클라이언트 모두 포함)
 mcp>=1.2
 
+# LangGraph (엔티티 기반 의도 파악 그래프)
+langgraph>=1.0
+
 # 설정/환경변수(.env) 로드 + 타입 검증
 pydantic-settings>=2.0

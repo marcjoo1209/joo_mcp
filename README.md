@@ -24,6 +24,7 @@ MCP가 처음이라면 아래 문서를 순서대로 읽으면 됩니다.
 | 2 | [docs/02-MCP-아키텍처.md](docs/02-MCP-아키텍처.md) | Host / Client / Server 구조와 도구 호출 흐름 |
 | 3 | [docs/03-프로젝트-동작-방식.md](docs/03-프로젝트-동작-방식.md) | 이 코드가 실제로 어떻게 동작하는지 줄줄이 설명 |
 | 4 | [docs/04-비용과-세션-최적화.md](docs/04-비용과-세션-최적화.md) | 세션 재사용·컨텍스트 캐싱으로 지연/비용 줄이기 |
+| 5 | [docs/05-랭그래프-의도파악.md](docs/05-랭그래프-의도파악.md) | LangGraph 로 엔티티 기반 의도 파악 (`/intent`) |
 
 ---
 
@@ -54,10 +55,12 @@ joo_mcp/
     │   ├── deps.py                ←   의존성 주입(DI) 제공자
     │   └── routes/
     │       ├── notes.py           ←   /notes 라우터 (직접 REST CRUD)
-    │       └── chat.py            ←   /chat 라우터 (AI CRUD)
+    │       ├── chat.py            ←   /chat 라우터 (AI CRUD, LLM이 도구 선택)
+    │       └── intent.py          ←   /intent 라우터 (LangGraph 의도 파악)
     ├── services/
     │   ├── note_service.py        ←   메모 비즈니스 로직
     │   ├── chat_service.py        ← ★ Gemini ↔ MCP 오케스트레이션 (핵심)
+    │   ├── intent_graph.py        ← ★ LangGraph 엔티티 기반 의도 파악
     │   └── mcp_session.py         ←   영속 MCP 세션 매니저 (요청당 subprocess 제거)
     ├── repositories/
     │   └── note_repository.py     ← ★ 데이터 접근(SQL). REST와 MCP가 공유
@@ -145,6 +148,18 @@ curl -X POST http://127.0.0.1:8000/chat -H "Content-Type: application/json" -d "
 `/chat`으로 만든 메모는 `GET /notes`로도 똑같이 보입니다.
 **같은 DB를 사람과 AI가 공유**하기 때문입니다. — 이것이 MCP의 핵심 가치입니다.
 
+### C. LangGraph 의도 파악 (엔티티 → 의도 → 실행)
+
+`/chat`은 Gemini가 도구를 직접 고르지만, `/intent`는 **엔티티를 추출해 의도를 명시적으로
+파악**한 뒤 실행합니다. 응답에 인식한 엔티티/의도가 그대로 담깁니다.
+
+```bash
+curl -X POST http://127.0.0.1:8000/intent -H "Content-Type: application/json" -d "{\"message\":\"회의록 이라는 제목으로 메모 만들어줘\"}"
+# → {"intent":"create","entities":{"action":"create","title":"회의록",...},"reply":"메모를 생성했습니다. (id=1)"}
+```
+
+자세한 그래프 구조는 [docs/05](docs/05-랭그래프-의도파악.md) 참고.
+
 ---
 
 ## 5. 테스트 (e2e)
@@ -161,6 +176,7 @@ pytest
 |---|---|
 | `tests/test_notes_api_e2e.py` | 직접 REST CRUD (생성/조회/수정/삭제 + 404·422) |
 | `tests/test_mcp_server_e2e.py` | MCP 서버 도구 CRUD (실제 서버를 stdio 로 띄워 호출) |
+| `tests/test_intent.py` | LangGraph 의도 분류/응답(결정론적) + 그래프 e2e(SKIP) |
 | `tests/test_chat_e2e.py` | AI 경로(FastAPI→Gemini→MCP). 기본 SKIP |
 
 `test_chat_e2e.py` 는 실제 Gemini 를 호출하므로 비용/비결정성 때문에 기본으로 건너뜁니다.

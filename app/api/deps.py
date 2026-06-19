@@ -10,6 +10,7 @@ from fastapi import HTTPException, Request, status
 
 from app.repositories.note_repository import NoteRepository
 from app.services.chat_service import ChatService
+from app.services.intent_graph import IntentService
 from app.services.note_service import NoteService
 
 
@@ -29,5 +30,16 @@ def get_chat_service(request: Request) -> ChatService:
         raise HTTPException(
             status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             detail="GEMINI_API_KEY 가 설정되지 않아 /chat 을 사용할 수 없습니다.",
+        )
+    return service
+
+
+def get_intent_service(request: Request) -> IntentService:
+    """lifespan 이 만들어 둔 LangGraph IntentService 를 돌려준다."""
+    service = getattr(request.app.state, "intent_service", None)
+    if service is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="GEMINI_API_KEY 가 설정되지 않아 /intent 를 사용할 수 없습니다.",
         )
     return service
