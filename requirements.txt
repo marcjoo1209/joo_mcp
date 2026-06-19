@@ -1,0 +1,12 @@
+# 웹 프레임워크
+fastapi>=0.115
+uvicorn[standard]>=0.30
+
+# Gemini API SDK (MCP 세션을 도구로 직접 지원)
+google-genai>=1.0
+
+# MCP 파이썬 SDK (서버/클라이언트 모두 포함)
+mcp>=1.2
+
+# 환경변수(.env) 로드
+python-dotenv>=1.0
