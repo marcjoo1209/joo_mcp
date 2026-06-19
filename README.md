@@ -173,5 +173,5 @@ $env:RUN_CHAT_E2E="1"; pytest tests/test_chat_e2e.py -v
 
 - **MCP 서버 만들기**: `@mcp.tool()` 로 함수를 AI가 쓸 수 있는 도구로 노출
 - **MCP 클라이언트 연결**: stdio 로 서버 프로세스를 띄우고 세션 연결
-- **Gemini 도구 연동**: `google-genai` SDK 에 MCP 세션을 `tools` 로 넘겨 자동 호출
+- **Gemini 도구 연동**: MCP 도구를 Gemini FunctionDeclaration 으로 변환하고 함수 호출 루프로 실행
 - **CRUD 설계**: 같은 데이터 저장소를 REST API 와 AI 도구가 함께 사용

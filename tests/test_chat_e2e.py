@@ -23,24 +23,28 @@ pytestmark = pytest.mark.skipif(
 )
 
 
-def test_chat_creates_note_end_to_end(client):
-    """자연어로 메모 생성을 요청하면, Gemini 가 MCP 도구로 실제 메모를 만든다."""
+def test_chat_crud_end_to_end(client):
+    """자연어 한 번의 세션 안에서 생성 → 조회 흐름을 검증한다.
+
+    실제 Gemini 가 MCP 도구(create_note/list_notes)를 호출하고,
+    그 결과가 같은 DB 에 반영되어 REST 로도 보이는지 확인한다.
+
+    (실 API 호출 + MCP 서브프로세스 정리의 상호작용을 줄이기 위해
+     하나의 TestClient 세션 안에서 처리한다.)
+    """
+    # 1) 생성 요청
     res = client.post(
         "/chat",
-        json={"message": "'테스트 메모'라는 제목으로 메모 하나 만들어줘"},
+        json={"message": "테스트 메모 라는 제목으로 메모 하나 만들어줘"},
     )
     assert res.status_code == 200
-    reply = res.json()["reply"]
-    assert isinstance(reply, str) and reply.strip()
+    assert res.json()["reply"].strip()
 
-    # 같은 DB 를 공유하므로 REST 로 생성 결과를 확인할 수 있다.
+    # 2) 같은 DB 공유 → REST 로 생성 결과 확인
     notes = client.get("/notes").json()
     assert len(notes) >= 1
 
-
-def test_chat_lists_notes_end_to_end(client):
-    """기존 메모가 있을 때 '목록 보여줘' 요청이 정상 응답을 준다."""
-    client.post("/notes", json={"title": "사전메모", "content": "내용"})
-    res = client.post("/chat", json={"message": "메모 목록 보여줘"})
-    assert res.status_code == 200
-    assert res.json()["reply"].strip()
+    # 3) 목록 조회 요청도 정상 응답
+    res2 = client.post("/chat", json={"message": "메모 목록 보여줘"})
+    assert res2.status_code == 200
+    assert res2.json()["reply"].strip()
