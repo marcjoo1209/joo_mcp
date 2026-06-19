@@ -24,6 +24,8 @@ class NoteService:
 
     def get_note(self, note_id: int) -> Note:
         note = self.repository.get(note_id)
+        # Repository 는 "없음"을 None 으로 알린다 → Service 는 도메인 예외로 승격.
+        # (HTTP 404 변환은 main.py 의 예외 핸들러가 담당)
         if note is None:
             raise NoteNotFoundError(note_id)
         return note

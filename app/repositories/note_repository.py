@@ -18,10 +18,12 @@ from app.models.note import Note
 
 
 def _now() -> str:
+    # 생성/수정 시각. UTC ISO8601 문자열로 저장(타임존 모호함 제거).
     return datetime.now(timezone.utc).isoformat()
 
 
 def _to_note(row: sqlite3.Row) -> Note:
+    # DB row(sqlite3.Row) → 도메인 모델(Note). 계층 간 경계 변환.
     return Note(
         id=row["id"],
         title=row["title"],
@@ -35,19 +37,20 @@ class NoteRepository:
     """notes 테이블에 대한 CRUD."""
 
     def create(self, title: str, content: str = "") -> Note:
-        now = _now()
+        now = _now()  # created_at 과 updated_at 을 같은 값으로 시작
         with get_connection() as conn:
             cur = conn.execute(
                 "INSERT INTO notes (title, content, created_at, updated_at) "
-                "VALUES (?, ?, ?, ?)",
+                "VALUES (?, ?, ?, ?)",  # ? 바인딩으로 SQL 인젝션 방지
                 (title, content, now, now),
             )
             conn.commit()
-            note_id = cur.lastrowid
-        return self.get(note_id)  # type: ignore[return-value]
+            note_id = cur.lastrowid  # 방금 INSERT 된 행의 자동 증가 id
+        return self.get(note_id)  # 저장된 전체 행을 다시 읽어 반환  # type: ignore[return-value]
 
     def list(self) -> list[Note]:
         with get_connection() as conn:
+            # 최신순(id 내림차순)으로 전체 조회
             rows = conn.execute("SELECT * FROM notes ORDER BY id DESC").fetchall()
         return [_to_note(r) for r in rows]
 
@@ -66,8 +69,9 @@ class NoteRepository:
     ) -> Note | None:
         existing = self.get(note_id)
         if existing is None:
-            return None
+            return None  # 대상이 없으면 None → Service 가 예외로 변환
 
+        # None 인 인자는 "수정 안 함" 의미 → 기존 값 유지(부분 수정)
         new_title = title if title is not None else existing.title
         new_content = content if content is not None else existing.content
         with get_connection() as conn:
@@ -82,4 +86,4 @@ class NoteRepository:
         with get_connection() as conn:
             cur = conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))
             conn.commit()
-        return cur.rowcount > 0
+        return cur.rowcount > 0  # 삭제된 행이 1개 이상이면 성공
