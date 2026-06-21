@@ -27,6 +27,9 @@ MCP가 처음이라면 아래 문서를 순서대로 읽으면 됩니다.
 | 5 | [docs/05-랭그래프-의도파악.md](docs/05-랭그래프-의도파악.md) | LangGraph 로 엔티티 기반 의도 파악 (`/intent`) |
 | 6 | [docs/06-시나리오-LLM-CRUD.md](docs/06-시나리오-LLM-CRUD.md) | LLM 이 메모를 MCP 로 CRUD 하는 시나리오 (흐름→코드 라인→엣지케이스→검증 로그) |
 
+> 💡 위 시나리오를 **단계별 애니메이션으로 보려면** [`dashboard/scenarios.html`](dashboard/scenarios.html)
+> 을 브라우저로 열면 됩니다. 서버·API 키 없이 동작하는 정적 대시보드입니다.
+
 ---
 
 ## 2. 프로젝트 구조 (표준 레이어드 아키텍처)
